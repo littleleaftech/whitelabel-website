@@ -1,9 +1,17 @@
 const functions = require("firebase-functions");
+const bodyParser = require("body-parser");
+const express = require("express");
+const cors = require("cors");
+const { adminLogin } = require("./controllers/user");
 
-// Create and Deploy Your First Cloud Functions
-// https://firebase.google.com/docs/functions/write-firebase-functions
+const app = express(); // creates express app
 
-exports.helloWorld = functions.https.onRequest((request, response) => {
-  functions.logger.info("Hello logs!", { structuredData: true });
-  response.send("Hello from Firebase!");
-});
+app.use(cors({ origin: true }));
+app.use(bodyParser.json()); // parse json object bodies
+app.use(bodyParser.urlencoded()); // parse bodies passed from a url ie form
+
+app.post("/admin", adminLogin);
+
+// onRequest takes a https function
+// app will turn into multiple different routes
+exports.api = functions.region("europe-west2").https.onRequest(app);
