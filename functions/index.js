@@ -2,16 +2,18 @@ const functions = require("firebase-functions");
 const bodyParser = require("body-parser");
 const express = require("express");
 const cors = require("cors");
-const { adminLogin } = require("./controllers/user");
+const { adminLogin } = require("./controllers/auth-endpoint");
 
-const app = express(); // creates express app
+const app = express();
 
 app.use(cors({ origin: true }));
-app.use(bodyParser.json()); // parse json object bodies
-app.use(bodyParser.urlencoded()); // parse bodies passed from a url ie form
+app.use(bodyParser.json({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.post("/admin", adminLogin);
 
-// onRequest takes a https function
-// app will turn into multiple different routes
+app.use((req, res) => {
+  res.send({ error: "Path not found" });
+});
+
 exports.api = functions.region("europe-west2").https.onRequest(app);

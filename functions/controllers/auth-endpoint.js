@@ -18,6 +18,15 @@ exports.adminLogin = async (req, res) => {
     token = userToken;
     res.send({ token });
   } catch (error) {
-    res.send(error);
+    switch (error.code) {
+      case "auth/user-not-found":
+        return res.status(404).json({ error: "User not found" });
+        break;
+      case "auth/wrong-password":
+        return res.status(401).json({ error: "Invalid password" });
+        break;
+
+      default:
+    }
   }
 };
