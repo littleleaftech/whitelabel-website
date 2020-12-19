@@ -1,7 +1,8 @@
-const { authErrorHandler } = require("../utils/auth-error-handler");
+const {
+  authErrorHandler,
+} = require("../utils/errorHandlers/auth-error-handler");
 const { firebaseConfig } = require("../config/firebase-config");
-const admin = require("firebase-admin");
-admin.initializeApp();
+const { admin } = require("../config/admin-config");
 
 const firebase = require("firebase");
 firebase.initializeApp(firebaseConfig);
