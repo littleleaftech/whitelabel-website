@@ -8,14 +8,16 @@ exports.authErrorHandler = (error) => {
       break;
     case "auth/argument-error":
       return {
-        message: "Something went wrong when authenticating",
+        message: "Something went wrong when authenticating invalid JWT",
         status: 400,
+        error,
       };
       break;
     case "auth/id-token-expired":
       return {
-        message: "Something went wrong when authenticating",
+        message: "Something went wrong when authenticating expired JWT",
         status: 400,
+        error,
       };
       break;
     default:
