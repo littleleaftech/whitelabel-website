@@ -4,6 +4,7 @@ const {
 } = require("../utils/errorHandlers/auth-error-handler");
 const { contentBuilder } = require("../utils/helpers/content-builder");
 const { contentValidation } = require("../utils/helpers/content-validation");
+const { getAll, deleteItem } = require("./shared-crud-calls");
 
 exports.addContent = async (req, res) => {
   const { heading, content } = req.body;
@@ -43,7 +44,6 @@ exports.addContent = async (req, res) => {
 
 exports.getContent = async (req, res) => {
   const { page } = req.query;
-  let pageContent = [];
 
   if (!page) {
     return res
@@ -51,22 +51,7 @@ exports.getContent = async (req, res) => {
       .json({ message: "Something went wrong while trying to get content" });
   }
 
-  try {
-    const contentRef = await db.collection(`${page}`);
-    const allContent = await contentRef.get();
-
-    if (allContent.size === 0) {
-      return res.status(400).json({ message: "This page does not exist" });
-    } else {
-      allContent.forEach((doc) => {
-        pageContent.push({ id: doc.id, ...doc.data() });
-      });
-
-      return res.status(200).json(pageContent);
-    }
-  } catch (error) {
-    res.send({ error });
-  }
+  getAll(req, res);
 };
 
 exports.updateContent = async (req, res) => {
@@ -97,22 +82,5 @@ exports.updateContent = async (req, res) => {
 };
 
 exports.deleteContent = async (req, res) => {
-  const { page, section } = req.query;
-
-  try {
-    const contentRef = await db.collection(`${page}`).doc(`${section}`);
-    const doc = await contentRef.get();
-
-    if (!doc.exists) {
-      return res.status(400).json({ message: "This content does not exist" });
-    } else {
-      await db.collection(`${page}`).doc(`${section}`).delete();
-
-      return res
-        .status(200)
-        .json({ message: "This content has now been deleted", section });
-    }
-  } catch (error) {
-    res.send({ error });
-  }
+  deleteItem(req, res);
 };
