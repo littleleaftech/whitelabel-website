@@ -14,6 +14,11 @@ const {
   getContent,
   deleteContent,
 } = require("./controllers/content-body-endpoint.js");
+const {
+  addImages,
+  getAllImages,
+  deleteImage,
+} = require("./controllers/images-endpoint");
 
 const app = express();
 
@@ -29,8 +34,13 @@ app.post("/remove-admin", isAdmin, removeAdmin);
 /** Content endpoints */
 app.post("/content/body", isAdmin, addContent);
 app.put("/content/body", updateContent);
-app.get("/content/body", getContent);
-app.delete("/content/body", deleteContent);
+app.get("/content", getContent);
+app.delete("/content/:section", deleteContent);
+
+/** Image endpoints */
+app.post("/images/:page/:type", addImages);
+app.get("/images", getAllImages);
+app.delete("/images/:name", deleteImage);
 
 app.use((req, res) => {
   res.send({ error: "Path not found" });
