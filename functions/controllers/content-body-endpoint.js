@@ -8,7 +8,7 @@ const { getAll, deleteItem } = require("./shared-crud-calls");
 
 exports.addContent = async (req, res) => {
   const { heading, content } = req.body;
-  const { page, section } = req.query;
+  const { page, section } = req.params;
 
   // build content
   const newContent = contentBuilder(heading, content, section);
@@ -34,7 +34,6 @@ exports.addContent = async (req, res) => {
       });
     }
   } catch (error) {
-    console.log(error);
     const errorMessage = authErrorHandler(error.code);
     const { status, message } = errorMessage;
 
@@ -56,7 +55,7 @@ exports.getContent = async (req, res) => {
 
 exports.updateContent = async (req, res) => {
   const { heading, content } = req.body;
-  const { page, section } = req.query;
+  const { page, section } = req.params;
 
   // build content
   const newContent = contentBuilder(heading, content, section);

@@ -57,6 +57,12 @@ exports.addImages = (req, res) => {
         section: page,
       };
 
+      if (page === "aboutus" && imageType === "banner") {
+        res
+          .status(400)
+          .json({ message: "No banners can be added to this page" });
+      }
+
       try {
         // we need to call the collections and check the amount of data / images within each area
         // we will need to run a check to ensure we not uploading too many images
@@ -71,52 +77,98 @@ exports.addImages = (req, res) => {
         let documentArray = [];
 
         // set the image limit for each area
-        const homeLimit = 3;
-        const aboutusLimit = 2;
-        const contactusLimit = 2;
+        const homeImageLimit = 3;
+        const aboutusImageLimit = 2;
+        const contactusImageLimit = 2;
+        const homeBannerLimit = 1;
+        const contactusBannerLimit = 1;
 
         // get the amount of files that have been uploaded
         let fileAmount = fileWrites.length;
 
+        if (imageType === "image" && fileAmount > 3) {
+          return res
+            .status(400)
+            .json({ message: "Too many images selected, 3 is the maximum" });
+        }
+
+        if (imageType === "banner" && fileAmount > 1) {
+          return res
+            .status(400)
+            .json({ message: "Too many banners selected, 3 is the maximum" });
+        }
         // if it exists -- validation process
         collectionSnapshot.forEach((doc) => {
           documentArray.push(doc.data());
         });
 
         // count all the sections that already exist -- set defaults of those section
-        const sectionTallies = documentArray.reduce(
-          (currentTally, currentSection) => {
-            currentTally[currentSection.section] =
-              (currentTally[currentSection.section] || 0) + 1;
-            return currentTally;
-          },
-          { home: 0, aboutus: 0, contactus: 0 }
-        );
+        const collectionTallies = documentArray.reduce((tally, collection) => {
+          let type = Object.keys(collection).find((key) => {
+            return key === "image" || key === "banner";
+          });
+
+          let collectionSection = collection["section"];
+          // check if the section exists
+          if (tally[collectionSection]) {
+            if (tally[collectionSection][type]) {
+              tally[collectionSection][type] += 1;
+            } else {
+              tally[collectionSection][type] = 1;
+            }
+          } else {
+            tally[collectionSection] = {};
+            tally[collectionSection][type] = 1;
+          }
+          return tally;
+        }, {});
+
+        // validation object key helper
+        const validatiePageKeys = (page) => {
+          return Object.keys(collectionTallies).includes(page);
+        };
 
         // validate the image
         const validateImageAmount = (
           page,
           fileAmount,
-          homeLimit,
-          aboutusLimit,
-          contactusLimit,
-          sectionTallies
+          homeImageLimit,
+          aboutusImageLimit,
+          contactusImageLimit,
+          collectionTallies
         ) => {
+          if (Object.keys(collectionTallies).length === 0) {
+            return true;
+          }
+
+          const homeImageCount = validatiePageKeys("home");
+          const aboutusImageCount = validatiePageKeys("aboutus");
+          const contactusImageCount = validatiePageKeys("contactus");
           switch (page) {
             case "home":
-              if (fileAmount + sectionTallies.home > homeLimit) {
+              if (
+                homeImageCount &&
+                fileAmount + collectionTallies.home.image > homeImageLimit
+              ) {
                 return false;
               } else {
                 return true;
               }
             case "contactus":
-              if (fileAmount + sectionTallies.contactus > contactusLimit) {
+              if (
+                contactusImageCount &&
+                fileAmount + collectionTallies.contactus.image >
+                  contactusImageLimit
+              ) {
                 return false;
               } else {
                 return true;
               }
             case "aboutus":
-              if (fileAmount + sectionTallies.aboutus > aboutusLimit) {
+              if (
+                aboutusImageCount &&
+                fileAmount + collectionTallies.aboutus.image > aboutusImageLimit
+              ) {
                 return false;
               } else {
                 return true;
@@ -126,20 +178,83 @@ exports.addImages = (req, res) => {
           }
         };
 
+        const validateBannerAmount = (
+          page,
+          fileAmount,
+          homeBannerLimit,
+          contactusBannerLimit,
+          collectionTallies
+        ) => {
+          if (Object.keys(collectionTallies).length === 0) {
+            return true;
+          }
+
+          const homeImageCount = validatiePageKeys("home");
+          const contactusImageCount = validatiePageKeys("contactus");
+          switch (page) {
+            case "home":
+              if (
+                homeImageCount &&
+                fileAmount + collectionTallies.home.banner > homeBannerLimit
+              ) {
+                return false;
+              } else {
+                return true;
+              }
+            case "contactus":
+              if (
+                fileAmount + collectionTallies.contactus.banner >
+                contactusBannerLimit
+              ) {
+                return false;
+              } else {
+                return true;
+              }
+
+            default:
+              break;
+          }
+        };
+
+        const validateGallery = (page, type) => {
+          if (Object.keys(collectionTallies).length === 0) {
+            return true;
+          }
+          if (page === "aboutus" && type === "gallery") {
+            return true;
+          } else {
+            return false;
+          }
+        };
+
         if (fileAmount > 3) {
           return res
             .status(400)
             .json({ message: "Too many files added, 3 is the maximum" });
         }
+
         if (!doc.exists) {
-          const isValid = validateImageAmount(
-            page,
-            fileAmount,
-            homeLimit,
-            aboutusLimit,
-            contactusLimit,
-            sectionTallies
-          );
+          let isValid;
+          if (imageType === "image") {
+            isValid = validateImageAmount(
+              page,
+              fileAmount,
+              homeImageLimit,
+              aboutusImageLimit,
+              contactusImageLimit,
+              collectionTallies
+            );
+          } else if (imageType === "banner") {
+            isValid = validateBannerAmount(
+              page,
+              fileAmount,
+              homeBannerLimit,
+              contactusBannerLimit,
+              collectionTallies
+            );
+          } else {
+            isValid = validateGallery(page, imageType);
+          }
 
           if (isValid) {
             await db.collection("images").doc(`${filename}`).set(newImage);
@@ -147,7 +262,7 @@ exports.addImages = (req, res) => {
           } else {
             return res.status(400).json({
               message:
-                "Too many images uploaded for this section, please retry with fewer images",
+                "Too many images uploaded for this section or the area does not exist on the page",
             });
           }
         } else {
