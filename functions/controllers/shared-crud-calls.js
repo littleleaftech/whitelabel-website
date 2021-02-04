@@ -26,21 +26,20 @@ exports.getAll = async (req, res) => {
 };
 
 exports.deleteItem = async (req, res) => {
-  const { page } = req.query;
-  const { section, name } = req.params;
-  let content = !page ? req.url.split("/")[1] : page;
-  let item = section ? section : name;
+  const { section, name, area, page } = req.params;
+  let collection = !page ? req.url.split("/")[1] : page;
+  let item = section ? section : name ? name : area;
 
   try {
-    const contentRef = await db.collection(`${content}`).doc(`${item}`);
+    const contentRef = await db.collection(collection).doc(item);
     const doc = await contentRef.get();
 
     if (!doc.exists) {
       return res.status(400).json({ message: "This content does not exist" });
     } else {
-      await db.collection(`${content}`).doc(`${item}`).delete();
+      await db.collection(collection).doc(item).delete();
 
-      if (!page) return;
+      if (collection == "image") return;
 
       return res
         .status(200)

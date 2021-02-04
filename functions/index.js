@@ -19,6 +19,12 @@ const {
   getAllImages,
   deleteImage,
 } = require("./controllers/images-endpoint");
+const {
+  addFooterContent,
+  updateFooterContent,
+  getFooterContent,
+  deleteFooterContent,
+} = require("./controllers/footer-endpoint");
 
 const app = express();
 
@@ -32,15 +38,21 @@ app.post("/set-admin", isAdmin, setAdmin);
 app.post("/remove-admin", isAdmin, removeAdmin);
 
 /** Content endpoints */
-app.post("/content/body", isAdmin, addContent);
-app.put("/content/body", updateContent);
+app.post("/content/body/:page/:section", isAdmin, addContent);
+app.put("/content/body/:page/:section", isAdmin, updateContent);
 app.get("/content", getContent);
-app.delete("/content/:section", deleteContent);
+app.delete("/content/:page/:section", isAdmin, deleteContent);
 
 /** Image endpoints */
-app.post("/images/:page/:type", addImages);
+app.post("/images/:page/:type", isAdmin, addImages);
 app.get("/images", getAllImages);
-app.delete("/images/:name", deleteImage);
+app.delete("/images/:name", isAdmin, deleteImage);
+
+/** Footer endpoints */
+app.post("/footer/:area", isAdmin, addFooterContent);
+app.put("/footer/:area", isAdmin, updateFooterContent);
+app.get("/footer", getFooterContent);
+app.delete("/footer/:area", isAdmin, deleteFooterContent);
 
 app.use((req, res) => {
   res.send({ error: "Path not found" });

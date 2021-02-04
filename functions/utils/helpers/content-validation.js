@@ -1,7 +1,7 @@
 exports.contentValidation = (page, section, req, res) => {
   const { heading, content } = req.body;
 
-  const pages = ["home", "about", "contactus", "footer"];
+  const pages = ["home", "aboutus", "contactus", "footer"];
   const sections = ["one", "two", "three"];
 
   if (!page || !section) {
@@ -26,7 +26,7 @@ exports.contentValidation = (page, section, req, res) => {
       }
 
       if (
-        (page === "about" && sectionArea === "three") ||
+        (page === "aboutus" && sectionArea === "three") ||
         (page === "contactus" && sectionArea === "three")
       ) {
         res.status(400).json({
